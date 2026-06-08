@@ -8,14 +8,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
   }
 
-  const existing = await prisma.user.findUnique({ where: { pseudo } })
-  if (existing) {
-    return NextResponse.json({ error: 'Pseudo already taken' }, { status: 409 })
+  try {
+    const existing = await prisma.user.findUnique({ where: { pseudo } })
+    if (existing) {
+      return NextResponse.json({ error: 'Pseudo already taken' }, { status: 409 })
+    }
+
+    const user = await prisma.user.create({
+      data: { firstName, pseudo },
+    })
+
+    return NextResponse.json({ user })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('[register] DB error:', message)
+    return NextResponse.json({ error: message }, { status: 500 })
   }
-
-  const user = await prisma.user.create({
-    data: { firstName, pseudo },
-  })
-
-  return NextResponse.json({ user })
 }

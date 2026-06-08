@@ -21,15 +21,17 @@ export default function HomePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ firstName, pseudo }),
       })
-      const data = await res.json()
+      const text = await res.text()
+      let data: { error?: string; user?: unknown }
+      try { data = JSON.parse(text) } catch { data = { error: `Server error (${res.status}): ${text.slice(0, 200)}` } }
       if (!res.ok) {
-        setError(data.error)
+        setError(data.error ?? 'Unknown error')
         return
       }
       localStorage.setItem('mathlegendsUser', JSON.stringify(data.user))
       router.push('/play')
-    } catch {
-      setError('An error occurred')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Network error')
     } finally {
       setLoading(false)
     }
