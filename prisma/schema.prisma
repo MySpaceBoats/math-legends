@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String   @id @default(cuid())
+  firstName     String
+  pseudo        String   @unique
+  email         String?  @unique
+  avatarUrl     String?
+  xp            Int      @default(0)
+  level         Int      @default(1)
+  eloRating     Int      @default(1000)
+  currentWorld  Int      @default(1)
+  currentLevel  Int      @default(1)
+  successRate   Float    @default(0)
+  totalQuizzes  Int      @default(0)
+  totalCorrect  Int      @default(0)
+  weeklyXp      Int      @default(0)
+  monthlyXp     Int      @default(0)
+  weeklyElo     Int      @default(1000)
+  monthlyElo    Int      @default(1000)
+  weekReset     DateTime @default(now())
+  monthReset    DateTime @default(now())
+  isAdmin       Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  quizAttempts   QuizAttempt[]
+  xpTransactions XPTransaction[]
+  eloHistory     EloHistory[]
+  userBadges     UserBadge[]
+
+  @@map("users")
+}
+
+model World {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  order       Int
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  levels Level[]
+
+  @@map("worlds")
+}
+
+model Level {
+  id         Int      @id @default(autoincrement())
+  worldId    Int
+  name       String
+  order      Int
+  difficulty Int      @default(1)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  world   World  @relation(fields: [worldId], references: [id])
+  quizzes Quiz[]
+
+  @@map("levels")
+}
+
+model Quiz {
+  id        Int      @id @default(autoincrement())
+  levelId   Int
+  title     String
+  order     Int
+  timeLimit Int      @default(30)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  level     Level         @relation(fields: [levelId], references: [id])
+  questions Question[]
+  attempts  QuizAttempt[]
+
+  @@map("quizzes")
+}
+
+model Question {
+  id            Int      @id @default(autoincrement())
+  quizId        Int
+  text          String
+  options       Json
+  correctAnswer String
+  explanation   String?
+  order         Int
+  createdAt     DateTime @default(now())
+
+  quiz Quiz @relation(fields: [quizId], references: [id])
+
+  @@map("questions")
+}
+
+model QuizAttempt {
+  id              String   @id @default(cuid())
+  userId          String
+  quizId          Int
+  score           Int
+  totalQuestions  Int
+  correctAnswers  Int
+  xpEarned        Int
+  eloChange       Int      @default(0)
+  avgResponseTime Float    @default(0)
+  errors          Json     @default("[]")
+  completedAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  quiz Quiz @relation(fields: [quizId], references: [id])
+
+  @@map("quiz_attempts")
+}
+
+model XPTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("xp_transactions")
+}
+
+model EloHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  change    Int
+  newRating Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("elo_history")
+}
+
+model Badge {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  icon        String
+  condition   String
+  createdAt   DateTime @default(now())
+
+  userBadges UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id       String   @id @default(cuid())
+  userId   String
+  badgeId  String
+  earnedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  badge Badge @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId])
+
+  @@map("user_badges")
+}
