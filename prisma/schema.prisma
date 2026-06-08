@@ -106,6 +106,8 @@ model QuizAttempt {
   correctAnswers  Int
   xpEarned        Int
   eloChange       Int      @default(0)
+  eloBefore       Int      @default(0)
+  duration        Float    @default(0)
   avgResponseTime Float    @default(0)
   errors          Json     @default("[]")
   completedAt     DateTime @default(now())
@@ -132,6 +134,7 @@ model EloHistory {
   id        String   @id @default(cuid())
   userId    String
   change    Int
+  eloBefore Int      @default(0)
   newRating Int
   reason    String
   createdAt DateTime @default(now())
@@ -166,4 +169,17 @@ model UserBadge {
   @@unique([userId, badgeId])
 
   @@map("user_badges")
+}
+
+model LeaderboardSnapshot {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // GLOBAL | WEEKLY | MONTHLY
+  xp        Int
+  elo       Int
+  rank      Int
+  createdAt DateTime @default(now())
+
+  @@index([type, createdAt])
+  @@map("leaderboard_snapshots")
 }
